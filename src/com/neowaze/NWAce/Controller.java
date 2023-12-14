@@ -2,13 +2,15 @@ package com.neowaze.NWAce;
 
 import java.awt.Graphics;
 import java.awt.Toolkit;
-import java.io.IOException;
 import java.util.LinkedList;
+import java.util.Random;
 
 public class Controller {
 
 	private LinkedList<Bullet> bulletList = new LinkedList<Bullet>();
 	private LinkedList<Enemy> enemyList = new LinkedList<Enemy>();
+	
+	Random rand = new Random();
 	
 	Enemy tmpEnemy;
 	Bullet tmpBullet;

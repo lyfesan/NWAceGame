@@ -1,6 +1,7 @@
 package com.neowaze.NWAce;
 
 import java.awt.Graphics;
+import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 
 public class Enemy {
@@ -19,6 +20,7 @@ public class Enemy {
 	}
 	
 	public void render(Graphics g) {
+		if (!Game.isWindows()) Toolkit.getDefaultToolkit().sync();
 		g.drawImage(enemyImage, (int)x, (int)y, null);
 	}
 }

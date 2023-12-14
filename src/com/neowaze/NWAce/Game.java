@@ -13,7 +13,7 @@ public class Game extends Canvas implements Runnable {
 	
 	private static String OS = System.getProperty("os.name");
 	private boolean running = false;
-	private Thread thread;
+	private Thread thread, thread1;
 	private static GameFrame gameFrame;
 	
 	public Game() {
@@ -46,7 +46,7 @@ public class Game extends Canvas implements Runnable {
 	public void run() {
 		//gameFrame.init();
 		long lastTime = System.nanoTime();
-		final double amountOfTicks = 60.0;
+		final double amountOfTicks = 90.0;
 		double ns = 1000000000 / amountOfTicks;
 		double delta = 0;
 		int updates = 0;
@@ -62,6 +62,7 @@ public class Game extends Canvas implements Runnable {
 				updates++;
 				delta--;
 			}
+			if (!Game.isWindows()) Toolkit.getDefaultToolkit().sync();
 			gameFrame.render();
 			frames++;
 			
@@ -82,15 +83,20 @@ public class Game extends Canvas implements Runnable {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		Game game = new Game();
+		//Game game = new Game();
 	
-		gameFrame.setVisible(true);
-		game.start();
-		/*
+		//gameFrame.setVisible(true);
+		//game.start();
+		
 		java.awt.EventQueue.invokeLater(() -> {
-			new GameFrame().setVisible(true);
+			Game game = new Game();
+			
+			//new GameFrame().setVisible(true);
+			gameFrame.setVisible(true);
+			game.start();
+			
 		});
-		*/
+		
 	}
 }
 

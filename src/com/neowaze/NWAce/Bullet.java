@@ -1,6 +1,7 @@
 package com.neowaze.NWAce;
 
 import java.awt.Graphics;
+import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
@@ -22,6 +23,7 @@ public class Bullet {
 	}
 	
 	public void render(Graphics g) {
+		if (!Game.isWindows()) Toolkit.getDefaultToolkit().sync();
 		g.drawImage(image, (int)x, (int)y, null);
 	}
 	
