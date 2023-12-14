@@ -3,7 +3,9 @@ package com.neowaze.NWAce;
 import java.awt.Canvas;
 import java.awt.Graphics;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
@@ -11,10 +13,12 @@ import java.io.IOException;
 
 public class Game extends Canvas implements Runnable {
 	
-	private static String OS = System.getProperty("os.name");
-	private boolean running = false;
-	private Thread thread, thread1;
+	private static boolean running = false;
+	private Thread thread, frameThread;
 	private static GameFrame gameFrame;
+	
+	static String OS = System.getProperty("os.name");
+	
 	
 	public Game() {
 		gameFrame = new GameFrame();
@@ -23,14 +27,14 @@ public class Game extends Canvas implements Runnable {
 	private synchronized void start() {
 		if(running) return;
 		running = true;
+		frameThread = new Thread(gameFrame);
 		thread = new Thread(this);
+		frameThread.start();
 		thread.start();
 	}
 	
 	private synchronized void stop() {
-		if(!running) {
-			return;
-		}
+		if(!running) return;
 		
 		running = false;
 		try {
@@ -44,9 +48,10 @@ public class Game extends Canvas implements Runnable {
 
 	@Override
 	public void run() {
+		//gameFrame.run();
 		//gameFrame.init();
 		long lastTime = System.nanoTime();
-		final double amountOfTicks = 90.0;
+		final double amountOfTicks = 60.0;
 		double ns = 1000000000 / amountOfTicks;
 		double delta = 0;
 		int updates = 0;
@@ -54,6 +59,7 @@ public class Game extends Canvas implements Runnable {
 		long timer = System.currentTimeMillis();
 		
 		while(running) {
+			
 			long now = System.nanoTime();
 			delta += (now - lastTime) / ns;
 			lastTime = now;
@@ -63,7 +69,7 @@ public class Game extends Canvas implements Runnable {
 				delta--;
 			}
 			if (!Game.isWindows()) Toolkit.getDefaultToolkit().sync();
-			gameFrame.render();
+			gameFrame.run();
 			frames++;
 			
 			if(System.currentTimeMillis() - timer > 1000) {

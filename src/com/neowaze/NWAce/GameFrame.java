@@ -16,7 +16,7 @@ import java.io.IOException;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
-public class GameFrame extends JFrame implements KeyListener, ActionListener {
+public class GameFrame extends JFrame implements KeyListener, ActionListener, Runnable {
 	
 	public static final int SCREEN_WIDTH = (int)Toolkit.getDefaultToolkit().getScreenSize().getWidth();
 	public static final int SCREEN_HEIGHT = (int)Toolkit.getDefaultToolkit().getScreenSize().getHeight();
@@ -29,10 +29,10 @@ public class GameFrame extends JFrame implements KeyListener, ActionListener {
 	private BufferedImage imageBackground;
 	
 	//Texture for all assets in game
-	private Textures textures; 
+	Textures textures; 
 	
-	private Player p;
-	private Controller c;
+	Player p;
+	Controller c;
 	
 	public GameFrame() {
 		
@@ -50,7 +50,7 @@ public class GameFrame extends JFrame implements KeyListener, ActionListener {
 		p = new Player(getWidth()/2-textures.player.getWidth()/2, getHeight()/2, "Player", textures);
 		c = new Controller(textures);
 		
-		
+		addKeyListener(this);
 		//setAlwaysOnTop(true);
 		//add(new GamePanel());
 		
@@ -100,7 +100,6 @@ public class GameFrame extends JFrame implements KeyListener, ActionListener {
 		setLocationRelativeTo(null);
 		setResizable(false);
 		
-		addKeyListener(this);
 	}
 	
 	void tick() {
@@ -136,7 +135,7 @@ public class GameFrame extends JFrame implements KeyListener, ActionListener {
 		bufferStrategy.show();
 		
 	}
-
+	
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		// TODO Auto-generated method stub
@@ -198,6 +197,14 @@ public class GameFrame extends JFrame implements KeyListener, ActionListener {
 	public void keyTyped(KeyEvent arg0) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	
+	@Override
+	public void run() {
+		//this.tick();
+		if (!Game.isWindows()) Toolkit.getDefaultToolkit().sync();
+		this.render();
 	}
 	
 }
