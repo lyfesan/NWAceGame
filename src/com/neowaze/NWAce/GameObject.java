@@ -2,7 +2,7 @@ package com.neowaze.NWAce;
 
 import java.awt.Rectangle;
 
-public class GameObject extends Physics {
+abstract public class GameObject extends Physics {
 
 	public double x, y, width, height;
 	Game game;
