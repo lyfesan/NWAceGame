@@ -7,69 +7,95 @@ import java.util.Random;
 
 public class Controller {
 
-	private LinkedList<Bullet> bulletList = new LinkedList<Bullet>();
-	private LinkedList<Enemy> enemyList = new LinkedList<Enemy>();
+	private LinkedList<EntityFriend> entityListFriend = new LinkedList<EntityFriend>();
+	private LinkedList<EntityEnemy> entityListEnemy = new LinkedList<EntityEnemy>();
+	//private LinkedList<Enemy> enemyList = new LinkedList<Enemy>();
 	
 	Random rand = new Random();
+	Textures tex;
+	EntityEnemy entityEnemy;
+	EntityFriend entityFriend;
+	Game game;
 	
-	Enemy tmpEnemy;
-	Bullet tmpBullet;
-	
-	public Controller(Textures tex) {
+	public Controller(Textures tex, Game game) {
+		this.tex = tex;
+		this.game = game;
+		/*
 		for(int x = 0; x < GameFrame.GAME_WINDOW_SIZE.width; x += 64) {
-			addEnemy(new Enemy(x, 0, tex));
+			addEntity(new Enemy(rand.nextInt(GameFrame.GAME_WINDOW_SIZE.width), 0, tex));
+		}
+		*/
+	}
+	
+	public void createEnemy(int enemyCount) {
+		for(int i=0;i<enemyCount;i++) {
+			this.addEntity(new Enemy(rand.nextInt(15,GameFrame.GAME_WINDOW_SIZE.width-15), 
+								0, tex, game, this));
 		}
 	}
 	
 	public void tick() {
 		//Move the bullet
-		for(int i=0;i<bulletList.size();i++) {
-			tmpBullet = bulletList.get(i);
-			
-			if(tmpBullet.getY() < 0) {
-				removeBullet(tmpBullet);
+		for(int i=0;i<entityListFriend.size();i++) {
+			entityFriend = entityListFriend.get(i);
+			  
+			if(entityFriend.getY() < 0 && entityFriend.getClass()==Bullet.class) {
+				//System.out.println("Bullet removed");
+				removeEntity(entityFriend);
 			}
 			
-			tmpBullet.tick();
+			entityFriend.tick();
 		}
-		//Move the enemy
-		for(int i=0;i<enemyList.size();i++) {
-			tmpEnemy = enemyList.get(i);
-			tmpEnemy.tick();
+		for(int i=0;i<entityListEnemy.size();i++) {
+			entityEnemy = entityListEnemy.get(i);
+			  
+			if(entityEnemy.getY() < 0 && entityEnemy.getClass()==Bullet.class) {
+				//System.out.println("Bullet removed");
+				removeEntity(entityEnemy);
+			}
+			
+			entityEnemy.tick();
 		}
 	}
 	
 	public void render(Graphics g) {
 		
-		//Rendering all bullets
-		for(int i=0;i<bulletList.size();i++) {
-			tmpBullet = bulletList.get(i);
+		//Rendering all entity
+		for(int i=0;i<entityListFriend.size();i++) {
+			entityFriend = entityListFriend.get(i);
 			if (!Game.isWindows()) Toolkit.getDefaultToolkit().sync();
-			tmpBullet.render(g);
+			entityFriend.render(g);
 		}
 		
-		//Rendering all enemy
-		for(int i=0;i<enemyList.size();i++) {
-			tmpEnemy = enemyList.get(i);
+		for(int i=0;i<entityListEnemy.size();i++) {
+			entityEnemy = entityListEnemy.get(i);
 			if (!Game.isWindows()) Toolkit.getDefaultToolkit().sync();
-			tmpEnemy.render(g);
+			entityEnemy.render(g);
 		}
+		
+	}
+		
+	public void addEntity(EntityEnemy block) {
+		entityListEnemy.add(block);
 	}
 	
-	public void addBullet(Bullet block) {
-		bulletList.add(block);
+	public void removeEntity(EntityEnemy block) {
+		entityListEnemy.remove(block);
 	}
 	
-	public void removeBullet(Bullet block) {
-		bulletList.remove(block);
-		block = null;
+	public void addEntity(EntityFriend block) {
+		entityListFriend.add(block);
 	}
 	
-	public void addEnemy(Enemy enemy) {
-		enemyList.add(enemy);
+	public void removeEntity(EntityFriend block) {
+		entityListFriend.remove(block);
 	}
 	
-	public void removeEnemy(Enemy enemy) {
-		enemyList.remove(enemy);
+	public LinkedList<EntityFriend> getEntityFriendList(){
+		return entityListFriend;
+	}
+	
+	public LinkedList<EntityEnemy> getEntityEnemyList(){
+		return entityListEnemy;
 	}
 }

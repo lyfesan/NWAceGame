@@ -1,6 +1,8 @@
 package com.neowaze.NWAce;
 
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -12,9 +14,12 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.LinkedList;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+
+import com.neowaze.NWAce.Game.STATE;
 
 public class GameFrame extends JFrame implements KeyListener, ActionListener, Runnable {
 	
@@ -25,8 +30,10 @@ public class GameFrame extends JFrame implements KeyListener, ActionListener, Ru
 	public static Dimension GAME_WINDOW_SIZE;
 	public final String GAME_TITLE = "NWAce Game";
 	
+	private Game game;
 	//Use for Buffer image
 	private BufferedImage imageBackground;
+	private Menu mainMenu;
 	
 	//Texture for all assets in game
 	Textures textures; 
@@ -34,8 +41,14 @@ public class GameFrame extends JFrame implements KeyListener, ActionListener, Ru
 	Player p;
 	Controller c;
 	
-	public GameFrame() {
+	
+	public LinkedList<EntityFriend> entityFriend;
+	public LinkedList<EntityEnemy> entityEnemy;
+	
+	
+	public GameFrame(Game game) {
 		
+		this.game = game;
 		//Setting frame and binding listener
 		settingFrame();
 		
@@ -47,10 +60,16 @@ public class GameFrame extends JFrame implements KeyListener, ActionListener, Ru
 		requestFocus();
 		
 		//Initialize player and controller
-		p = new Player(getWidth()/2-textures.player.getWidth()/2, getHeight()/2, "Player", textures);
-		c = new Controller(textures);
+		c = new Controller(textures, game);
+		p = new Player(getWidth()/2-textures.player.getWidth()/2, getHeight()/2, "Player", textures, game, c);
+		mainMenu = new Menu();
 		
+		entityFriend = c.getEntityFriendList();
+		entityEnemy = c.getEntityEnemyList();
+		
+		c.createEnemy(game.getEnemyCount());
 		addKeyListener(this);
+		addMouseListener(new MouseInput(game));
 		//setAlwaysOnTop(true);
 		//add(new GamePanel());
 		
@@ -81,18 +100,20 @@ public class GameFrame extends JFrame implements KeyListener, ActionListener, Ru
 		addWindowListener(new WindowAdapter(){
 			@Override
 			public void windowClosing(WindowEvent e) {
+				// TODO Auto-generated catch block
 				int choose = JOptionPane.showConfirmDialog(null, 
-						"Do you really want to exit the application?",
-						"Confirm Close", JOptionPane.YES_NO_OPTION,
-						JOptionPane.INFORMATION_MESSAGE);
+							"Do you really want to exit the application?",
+							"Confirm Close", JOptionPane.YES_NO_OPTION,
+							JOptionPane.INFORMATION_MESSAGE);
 				if(choose == JOptionPane.YES_OPTION) {
-					e.getWindow().dispose();
-					System.out.println("close");
+						e.getWindow().dispose();
+						System.out.println("close");
 				} else {
-					setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		
+						setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+			
+					}
 				}
-			}
+				
 		});
 		
 		GAME_WINDOW_SIZE = this.getSize();
@@ -103,12 +124,24 @@ public class GameFrame extends JFrame implements KeyListener, ActionListener, Ru
 	}
 	
 	void tick() {
-		p.tick();
-		c.tick();
+		
+		if(p.getHealth()<=0) {
+			game.setState(STATE.GAMEOVER);
+		}
+		else if(game.getState() == STATE.GAME) {
+		
+			p.tick();
+			c.tick();
+			
+			if(game.getEnemyKilled() >= game.getEnemyCount()) {
+				game.setEnemyCount(game.getEnemyCount()+1);
+				game.setEnemyKilled(0);
+				c.createEnemy(game.getEnemyCount());
+			}
+		}
 	}
 	
 	void render() {
-		
 		//Fix problem for non application lagging when using BufferStrategy for non Windows OS
 		if (!Game.isWindows()) Toolkit.getDefaultToolkit().sync();
 		
@@ -125,15 +158,26 @@ public class GameFrame extends JFrame implements KeyListener, ActionListener, Ru
 		//Graphics g = gameFrame.getGraphics();
 
 		g.drawImage(imageBackground, 0, 0, this.getWidth(), this.getHeight(), this);
-		//g.drawImage(playerIcon, this.getWidth()/2, this.getHeight()/2, this);
-		if (!Game.isWindows()) Toolkit.getDefaultToolkit().sync();
-		p.render(g); 
-		if (!Game.isWindows()) Toolkit.getDefaultToolkit().sync();
-		c.render(g);
 		
+		if(game.getState() == STATE.MENU) {
+			mainMenu.render(g);
+		}
+		else if(game.getState()==STATE.GAMEOVER) {
+			GameOver.render(g);
+		}
+		else if(game.getState() == STATE.GAME) {
+			//g.drawImage(playerIcon, this.getWidth()/2, this.getHeight()/2, this);
+			if (!Game.isWindows()) Toolkit.getDefaultToolkit().sync();
+			p.render(g); 
+			if (!Game.isWindows()) Toolkit.getDefaultToolkit().sync();
+			c.render(g);
+			g.setColor(Color.WHITE);
+			g.setFont(new Font("Arial", Font.PLAIN, 24));
+			g.drawString("Health: " + p.getHealth(), 10, 55);
+			
+		}
 		g.dispose();
 		bufferStrategy.show();
-		
 	}
 	
 	@Override
@@ -147,28 +191,29 @@ public class GameFrame extends JFrame implements KeyListener, ActionListener, Ru
 		// TODO Auto-generated method stub
 		int key = e.getKeyCode();
 		
-		if(key == KeyEvent.VK_RIGHT) {
-			p.setVelX(5);
-		}
-		if(key == KeyEvent.VK_LEFT) {
-			p.setVelX(-5);
-		}
-		if(key == KeyEvent.VK_DOWN) {
-			p.setVelY(5);
-		}
-		if(key == KeyEvent.VK_UP) {
-			p.setVelY(-5);
-		}
 		if(key == KeyEvent.VK_SPACE && !p.getIsShooting()) {
 			try {
 				p.setIsShooting(true);
-				c.addBullet(new Bullet(p.getX()+p.getPlayerImage().getWidth()/2-12, 
-								p.getY()+p.getPlayerImage().getHeight()/2, textures));
+				//p.timeElapsedShooting = System.currentTimeMillis();
+				c.addEntity(new Bullet(p.getX()+p.getPlayerImage().getWidth()/2-12, 
+								p.getY()+p.getPlayerImage().getHeight()/2, textures, game, c));
 			} catch (IOException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}		
 		}
+		else if(key == KeyEvent.VK_RIGHT || key == KeyEvent.VK_D) {
+			p.setVelX(5);
+		}
+		else if(key == KeyEvent.VK_LEFT || key == KeyEvent.VK_A) {
+			p.setVelX(-5);
+		}
+		else if(key == KeyEvent.VK_DOWN || key == KeyEvent.VK_S) {
+			p.setVelY(5);
+		}
+		else if(key == KeyEvent.VK_UP || key == KeyEvent.VK_W) {
+			p.setVelY(-5);
+		}
+		
 	}
 
 	@Override
@@ -176,21 +221,22 @@ public class GameFrame extends JFrame implements KeyListener, ActionListener, Ru
 		// TODO Auto-generated method stub
 		int key = e.getKeyCode();
 		
-		if(key == KeyEvent.VK_RIGHT) {
-			p.setVelX(0);
-		}
-		if(key == KeyEvent.VK_LEFT) {
-			p.setVelX(0);
-		}
-		if(key == KeyEvent.VK_DOWN) {
-			p.setVelY(0);
-		}
-		if(key == KeyEvent.VK_UP) {
-			p.setVelY(0);
-		}
 		if(key == KeyEvent.VK_SPACE) {
-				p.setIsShooting(false);		
+			p.setIsShooting(false);		
 		}
+		else if(key == KeyEvent.VK_RIGHT || key == KeyEvent.VK_D) {
+			p.setVelX(0);
+		}
+		else if(key == KeyEvent.VK_LEFT || key == KeyEvent.VK_A) {
+			p.setVelX(0);
+		}
+		else if(key == KeyEvent.VK_DOWN || key == KeyEvent.VK_S) {
+			p.setVelY(0);
+		}
+		else if(key == KeyEvent.VK_UP || key == KeyEvent.VK_W) {
+			p.setVelY(0);
+		}
+		
 	}
 
 	@Override
@@ -198,7 +244,6 @@ public class GameFrame extends JFrame implements KeyListener, ActionListener, Ru
 		// TODO Auto-generated method stub
 		
 	}
-	
 	
 	@Override
 	public void run() {

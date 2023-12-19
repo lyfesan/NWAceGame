@@ -14,23 +14,32 @@ import java.io.IOException;
 public class Game extends Canvas implements Runnable {
 	
 	private static boolean running = false;
-	private Thread thread, frameThread;
-	private static GameFrame gameFrame;
+	private Thread gameThread, frameThread;
+	static GameFrame gameFrame;
 	
 	static String OS = System.getProperty("os.name");
+	private int enemyCount = 5;
+	private int enemyKilled = 0;
 	
+	static enum STATE{
+		MENU,
+		GAME,
+		GAMEOVER
+	};
+	
+	public static STATE State = STATE.MENU;
 	
 	public Game() {
-		gameFrame = new GameFrame();
+		gameFrame = new GameFrame(this);
 	}
 
 	private synchronized void start() {
 		if(running) return;
 		running = true;
 		frameThread = new Thread(gameFrame);
-		thread = new Thread(this);
+		gameThread = new Thread(this);
 		frameThread.start();
-		thread.start();
+		gameThread.start();
 	}
 	
 	private synchronized void stop() {
@@ -38,7 +47,8 @@ public class Game extends Canvas implements Runnable {
 		
 		running = false;
 		try {
-			thread.join();
+			gameThread.join();
+			frameThread.join();
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -85,6 +95,30 @@ public class Game extends Canvas implements Runnable {
 	
 	public static boolean isWindows() {
 		return (OS.toLowerCase().indexOf("win") >= 0);
+	}
+
+	public int getEnemyCount() {
+		return enemyCount;
+	}
+
+	public void setEnemyCount(int enemyCount) {
+		this.enemyCount = enemyCount;
+	}
+
+	public int getEnemyKilled() {
+		return enemyKilled;
+	}
+
+	public void setEnemyKilled(int enemyKilled) {
+		this.enemyKilled = enemyKilled;
+	}
+
+	public STATE getState() {
+		return State;
+	}
+
+	public void setState(STATE state) {
+		State = state;
 	}
 
 	public static void main(String[] args) {
